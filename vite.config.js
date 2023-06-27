@@ -6,10 +6,11 @@ import path from "path";
 export default defineConfig({
   plugins: [
     VitePWA({
-      registerType: "autoUpdate",
+      registerType: "prompt",
       base: "/",
       srcDir: "src",
       strategies: "generateSW",
+      manifest: "./dist/manifest.webmanifest",
     }),
     vue(),
   ],
