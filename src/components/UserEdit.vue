@@ -1,80 +1,84 @@
 <template>
-  <div class="row">
-    <div class="col-md-12">
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Phone</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="user in Users" :key="user.key">
-            <td>{{ user.name }}</td>
-            <td>{{ user.email }}</td>
-            <td>{{ user.phone }}</td>
-            <td>
-              <router-link
-                :to="{ name: 'edit', params: { id: user.key } }"
-                class="btn btn-primary"
-                >Edit
-              </router-link>
-              <button
-                @click.prevent="deleteUser(user.key)"
-                class="btn btn-danger"
-              >
-                Delete
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+  <div class="row justify-content-center">
+    <div class="col-md-5">
+      <h3 class="text-center">Update User</h3>
+      <form @submit.prevent="onUpdateForm">
+        <div class="form-group">
+          <label>Name</label>
+          <input
+            type="text"
+            class="form-control"
+            v-model="user.name"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input
+            type="email"
+            class="form-control"
+            v-model="user.email"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input
+            type="text"
+            class="form-control"
+            v-model="user.phone"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <button class="btn btn-primary btn-block">Update User</button>
+        </div>
+      </form>
     </div>
   </div>
 </template>
+
 <script>
-import db from "../FirebaseDB";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import  db  from "../FirebaseDB";
 
 export default {
   data() {
     return {
-      Users: [],
+      user: {},
     };
   },
   created() {
-    db.collection("users").onSnapshot((snapshotChange) => {
-      this.Users = [];
-      snapshotChange.forEach((doc) => {
-        this.Users.push({
-          key: doc.id,
-          name: doc.data().name,
-          email: doc.data().email,
-          phone: doc.data().phone,
-        });
+    const userId = this.$route.params.id;
+    const userDocRef = doc(db, "users", userId);
+
+    getDoc(userDocRef)
+      .then((doc) => {
+        if (doc.exists()) {
+          this.user = doc.data();
+        } else {
+          console.log("User document does not exist!");
+        }
+      })
+      .catch((error) => {
+        console.log(error);
       });
-    });
   },
   methods: {
-    deleteUser(id) {
-      if (window.confirm("Do you really want to delete?")) {
-        db.collection("users")
-          .doc(id)
-          .delete()
-          .then(() => {
-            console.log("Document deleted!");
-          })
-          .catch((error) => {
-            console.error(error);
-          });
-      }
+    onUpdateForm(event) {
+      event.preventDefault();
+      const userId = this.$route.params.id;
+      const userDocRef = doc(db, "users", userId);
+
+      updateDoc(userDocRef, this.user)
+        .then(() => {
+          console.log("User successfully updated!");
+          this.$router.push("/list");
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     },
   },
 };
 </script>
-<style>
-.btn-primary {
-  margin-right: 12px;
-}
-</style>
